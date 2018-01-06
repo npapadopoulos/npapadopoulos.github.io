@@ -1,7 +1,7 @@
 <html>
 <head>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.11.5/paper-core.min.js"></script>
-  <script type="text/paperscript" canvas="myCanvas">
+  <script type="text/paperscript" canvas="canvas-1">
   var values = {
   	friction: 0.8,
   	timeStep: 0.01,
@@ -112,6 +112,8 @@
 </script>
 </head>
 <body>
-<canvas id="myCanvas" resize></canvas>
+<div class="canvas">
+    <canvas resize="true" hidpi="off" id="canvas-1"></canvas>
+</div>
 </body>
 </html>
