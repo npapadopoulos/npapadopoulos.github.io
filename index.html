@@ -2,113 +2,73 @@
 <head>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.11.5/paper-full.js"></script>
   <script type="text/paperscript" canvas="canvas-1">
-  var values = {
-  	friction: 0.8,
-  	timeStep: 0.01,
-  	amount: 15,
-  	mass: 2,
-  	count: 0
-  };
-  values.invMass = 1 / values.mass;
+  // Based on 'JPEG Raster' by Jonathan Puckey:
+// http://www.flickr.com/photos/puckey/3179779686/in/photostream/
 
-  var path, springs;
-  var size = view.size * [1.2, 1];
+// Create a raster item:
+var raster = new Raster('mona.jpg');
+var loaded = false;
 
-  var Spring = function(a, b, strength, restLength) {
-  	this.a = a;
-  	this.b = b;
-  	this.restLength = restLength || 80;
-  	this.strength = strength ? strength : 0.55;
-  	this.mamb = values.invMass * values.invMass;
-  };
+raster.on('load', function() {
+	loaded = true;
+	onResize();
+});
 
-  Spring.prototype.update = function() {
-  	var delta = this.b - this.a;
-  	var dist = delta.length;
-  	var normDistStrength = (dist - this.restLength) /
-  			(dist * this.mamb) * this.strength;
-  	delta.y *= normDistStrength * values.invMass * 0.2;
-  	if (!this.a.fixed)
-  		this.a.y += delta.y;
-  	if (!this.b.fixed)
-  		this.b.y -= delta.y;
-  };
+// Make the raster invisible:
+raster.visible = false;
 
+var lastPos = view.center;
+function moveHandler(event) {
+	if (!loaded)
+		return;
+	if (lastPos.getDistance(event.point) < 10)
+		return;
+	lastPos = event.point;
 
-  function createPath(strength) {
-  	var path = new Path({
-  		fillColor: 'black'
-  	});
-  	springs = [];
-  	for (var i = 0; i <= values.amount; i++) {
-  		var segment = path.add(new Point(i / values.amount, 0.5) * size);
-  		var point = segment.point;
-  		if (i == 0 || i == values.amount)
-  			point.y += size.height;
-  		point.px = point.x;
-  		point.py = point.y;
-  		// The first two and last two points are fixed:
-  		point.fixed = i < 2 || i > values.amount - 2;
-  		if (i > 0) {
-  			var spring = new Spring(segment.previous.point, point, strength);
-  			springs.push(spring);
-  		}
-  	}
-  	path.position.x -= size.width / 4;
-  	return path;
-  }
+	var size = this.bounds.size.clone();
+	var isLandscape = size.width > size.height;
 
-  function onResize() {
-  	if (path)
-  		path.remove();
-  	size = view.bounds.size * [2, 1];
-  	path = createPath(0.1);
-  }
+	// If the path is in landscape orientation, we're going to
+	// split the path horizontally, otherwise vertically:
 
-  function onMouseMove(event) {
-  	var location = path.getNearestLocation(event.point);
-  	var segment = location.segment;
-  	var point = segment.point;
+	size /= isLandscape ? [2, 1] : [1, 2];
 
-  	if (!point.fixed && location.distance < size.height / 4) {
-  		var y = event.point.y;
-  		point.y += (y - point.y) / 6;
-  		if (segment.previous && !segment.previous.fixed) {
-  			var previous = segment.previous.point;
-  			previous.y += (y - previous.y) / 24;
-  		}
-  		if (segment.next && !segment.next.fixed) {
-  			var next = segment.next.point;
-  			next.y += (y - next.y) / 24; 
-  		}
-  	}
-  }
+	var path = new Path.Rectangle({
+		point: this.bounds.topLeft.floor(),
+		size: size.ceil(),
+		onMouseMove: moveHandler
+	});
+	path.fillColor = raster.getAverageColor(path);
 
-  function onFrame(event) {
-  	updateWave(path);
-  }
+	var path = new Path.Rectangle({
+		point: isLandscape
+			? this.bounds.topCenter.ceil()
+			: this.bounds.leftCenter.ceil(),
+		size: size.floor(),
+		onMouseMove: moveHandler
+	});
+	path.fillColor = raster.getAverageColor(path);
 
-  function updateWave(path) {
-  	var force = 1 - values.friction * values.timeStep * values.timeStep;
-  	for (var i = 0, l = path.segments.length; i < l; i++) {
-  		var point = path.segments[i].point;
-  		var dy = (point.y - point.py) * force;
-  		point.py = point.y;
-  		point.y = Math.max(point.y + dy, 0);
-  	}
+	this.remove();
+}
 
-  	for (var j = 0, l = springs.length; j < l; j++) {
-  		springs[j].update();
-  	}
-  	path.smooth({ type: 'continuous' });
-  }
+function onResize(event) {
+	if (!loaded)
+		return;
+	project.activeLayer.removeChildren();
 
-  function onKeyDown(event) {
-  	if (event.key == 'space') {
-  		path.fullySelected = !path.fullySelected;
-  		path.fillColor = path.fullySelected ? null : 'black';
-  	}
-  }
+	// Transform the raster so that it fills the bounding rectangle
+	// of the view:
+	raster.fitBounds(view.bounds, true);
+
+	// Create a path that fills the view, and fill it with
+	// the average color of the raster:
+	new Path.Rectangle({
+		rectangle: view.bounds,
+		fillColor: raster.getAverageColor(view.bounds),
+		onMouseMove: moveHandler
+	});
+}
 </script>
 </head>
 <body>
