@@ -1,336 +1,57 @@
-<!doctype html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="utf-8" />
-  <title>Site on Pause · Vitali Karagkezidis</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="We’re tuning the site to a new composition. Please check back soon." />
+	<style>
+	* {margin: 0; padding: 0}
+body {background: #000;}
+canvas {display: block;}
+	</style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.11.5/paper-full.js"></script>
+  <script type="text/paperscript" canvas="canvas-1">	
+  // Initialising the canvas
+var canvas = document.querySelector('canvas'),
+    ctx = canvas.getContext('2d');
 
-  <!-- Open Graph / Twitter -->
-  <meta property="og:title" content="Site on Pause · Vitali Karagkezidis" />
-  <meta property="og:description" content="We’re tuning the site to a new composition. Please check back soon." />
-  <meta property="og:type" content="website" />
-  <meta property="og:image" content="https://example.com/og-image.jpg" />
-  <meta property="og:url" content="https://example.com/" />
-  <meta name="twitter:card" content="summary_large_image" />
+// Setting the width and height of the canvas
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-  <!-- Favicon -->
-  favicon.ico
+// Setting up the letters
+var letters = 'ABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZ';
+letters = letters.split('');
 
-  <!-- Fonts: system stack for speed -->
-  <style>
-    :root{
-      --bg: #0f0f12;
-      --fg: #e9e9ee;
-      --muted: #b7b7c4;
-      --accent: #7aa2ff;          /* cool subtle blue */
-      --accent2: #f2b8ff;         /* gentle lavender */
-      --card: #15151b;
-      --border: #2a2a33;
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
-    }
-    @media (prefers-color-scheme: light) {
-      :root{
-        --bg: #fafafa;
-        --fg: #111114;
-        --muted: #4a4a55;
-        --accent: #3b6cff;
-        --accent2: #934bff;
-        --card: #ffffff;
-        --border: #e7e7ef;
-        --shadow: 0 8px 20px rgba(0,0,0,.08);
-      }
-    }
+// Setting up the columns
+var fontSize = 10,
+    columns = canvas.width / fontSize;
 
-    * { box-sizing: border-box }
-    html, body { height: 100% }
-    body {
-      margin: 0;
-      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
-      background: var(--bg);
-      color: var(--fg);
-      line-height: 1.6;
-    }
+// Setting up the drops
+var drops = [];
+for (var i = 0; i < columns; i++) {
+  drops[i] = 1;
+}
 
-    /* Ambient gradient lines reminiscent of staff lines & spectral music */
-    .ambient {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background:
-        radial-gradient(80vw 80vh at 10% 10%, rgba(122,162,255,0.15), transparent 60%),
-        radial-gradient(70vw 60vh at 90% 70%, rgba(242,184,255,0.10), transparent 65%);
-      mask:
-        linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.9) 20%, rgba(0,0,0,.9) 80%, transparent 100%);
+// Setting up the draw function
+function draw() {
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  for (var i = 0; i < drops.length; i++) {
+    var text = letters[Math.floor(Math.random() * letters.length)];
+    ctx.fillStyle = '#000000';
+    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+    drops[i]++;
+    if (drops[i] * fontSize > canvas.height && Math.random() > .95) {
+      drops[i] = 0;
     }
-    .lines {
-      position: fixed;
-      inset: 0;
-      background-image:
-        repeating-linear-gradient(
-          to bottom,
-          rgba(255,255,255,0.06) 0,
-          rgba(255,255,255,0.06) 1px,
-          transparent 28px,
-          transparent 48px
-        );
-      opacity: .35;
-      mix-blend-mode: screen;
-      animation: float 16s ease-in-out infinite;
-    }
-    @keyframes float {
-      0%   { transform: translateY(0) }
-      50%  { transform: translateY(-12px) }
-      100% { transform: translateY(0) }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .lines { animation: none }
-    }
+  }
+}
 
-    .wrap {
-      position: relative;
-      min-height: 100%;
-      display: grid;
-      place-items: center;
-      padding: 6vw 4vw;
-    }
-
-    .card {
-      width: min(900px, 100%);
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: var(--shadow);
-      padding: clamp(24px, 4vw, 48px);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-    .brand svg {
-      width: 40px; height: 40px;
-      flex: none;
-      filter: drop-shadow(0 6px 18px rgba(122,162,255,.25));
-    }
-    .brand h1 {
-      font-size: clamp(22px, 3.2vw, 30px);
-      margin: 0;
-      letter-spacing: .3px;
-    }
-
-    .headline {
-      font-size: clamp(26px, 4.5vw, 44px);
-      line-height: 1.2;
-      margin: 10px 0 8px;
-    }
-    .sub {
-      color: var(--muted);
-      font-size: clamp(15px, 2.2vw, 18px);
-      margin: 0 0 22px;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border: 1px dashed var(--border);
-      border-radius: 999px;
-      color: var(--muted);
-      margin-bottom: 22px;
-      font-size: 14px;
-    }
-    .badge .dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 0 6px color-mix(in oklab, var(--accent) 20%, transparent);
-    }
-
-    .cta {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-top: 20px;
-    }
-    .cta .block {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      background: color-mix(in oklab, var(--card) 85%, var(--accent) 7%);
-    }
-    .cta .block h3 {
-      margin: 0 0 6px;
-      font-size: 16px;
-    }
-    .cta .block p {
-      margin: 0 0 10px;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, color-mix(in oklab, var(--card) 90%, var(--accent) 10%), var(--card));
-      color: var(--fg);
-      cursor: pointer;
-      text-decoration: none;
-      font-weight: 600;
-      transition: transform .12s ease, box-shadow .12s ease, border-color .2s ease;
-    }
-    .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,.2) }
-    .btn.primary {
-      background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 18%, var(--card) 82%), var(--card));
-      border-color: color-mix(in oklab, var(--accent) 40%, var(--border) 60%);
-    }
-
-    .divider {
-      height: 1px;
-      background: var(--border);
-      margin: 22px 0;
-    }
-
-    .social {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .social a {
-      color: var(--muted);
-      text-decoration: none;
-      border: 1px solid var(--border);
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-size: 14px;
-    }
-    .social a:hover { color: var(--fg); border-color: color-mix(in oklab, var(--accent) 35%, var(--border) 65%) }
-
-    footer {
-      margin-top: 18px;
-      color: var(--muted);
-      font-size: 13px;
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .sr-only {
-      position: absolute !important;
-      width: 1px; height: 1px;
-      padding: 0; margin: -1px;
-      overflow: hidden; clip: rect(0,0,0,0);
-      border: 0;
-    }
-
-    /* Stack CTA columns on mobile */
-    @media (max-width: 720px) {
-      .cta { grid-template-columns: 1fr }
-    }
-  </style>
+// Loop the animation
+setInterval(draw, 66);
+</script>
 </head>
 <body>
-  <div class="ambient" aria-hidden="true"></div>
-  <div class="lines" aria-hidden="true"></div>
-
-  <main class="wrap" role="main">
-    <article class="card" aria-labelledby="title">
-      <div class="brand">
-        <!-- Minimal monogram / tuning fork icon -->
-        <svg viewBox="0 0 64 64" aria-hidden="true">
-          <defs>
-            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="var(--accent)" />
-              <stop offset="100%" stop-color="var(--accent2)" />
-            </linearGradient>
-          </defs>
-          <path d="M22 10v20a10 10 0 1 0 20 0V10" fill="none" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
-          <path d="M32 50v6" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
-        </svg>
-        <h1 id="title">Vitali Karagkezidis</h1>
-      </div>
-
-      <div class="badge" aria-live="polite">
-        <span class="dot" aria-hidden="true"></span>
-        <span>Maintenance mode · Preparing a new movement</span>
-      </div>
-
-      <h2 class="headline">We’re tuning the site.</h2>
-      <p class="sub">A refreshed interface, new recordings, and score previews are on the way. Thank you for your patience.</p>
-
-      <!-- Optional countdown: set target date/time -->
-      <div id="countdown" class="block" style="display:none" aria-live="polite" aria-atomic="true">
-        <h3>Estimated return</h3>
-        <p><span id="cd-days">0</span>d · <span id="cd-hours">0</span>h · <span id="cd-mins">0</span>m</p>
-      </div>
-
-      <div class="cta">
-        <div class="block">
-          <h3>Notify me</h3>
-          <p>Get a single email when the site returns.</p>
-          <form class="newsletter"cribe
-            <label class="sr-only" for="email">Email address</label>
-            <input id="email" name="email" type="email" required placeholder="you@example.com"
-                   style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--fg);margin-bottom:10px"/>
-            <button class="btn primary" type="submit">Subscribe</button>
-          </form>
-        </div>
-        <div class="block">
-          <h3>Contact</h3>
-          <p>For bookings, licensing, or press.</p>
-          mailto:studio@example.comstudio@example.com</a>
-        </div>
-      </div>
-
-      <div class="divider" role="separator" aria-hidden="true"></div>
-
-      <div class="social" aria-label="Social profiles">
-        <a href="https://instagram.com/yourstagram</a>
-        <a href="https://soundcloud.com/yourprofile" rel
-        <a href="https://bandcamp.com/yourndcamp</a>
-        https://youtube.com/@yourprofileYouTube</a>
-      </div>
-
-      <footer>
-        <span>© <span id="year"></span> Vitali Karagkezidis</span>
-        <span>Scores • Recordings • Projects</span>
-      </footer>
-    </article>
-  </main>
-
-  <script>
-    // Current year
-    document.getElementById('year').textContent = new Date().getFullYear();
-
-    // Optional COUNTDOWN — set a target date; if in future, show block
-    // Example target: 2025-12-15T18:00:00Z
-    const targetISO = '2025-12-15T18:00:00Z'; // TODO: set your target
-    const target = new Date(targetISO);
-    const cdEl = document.getElementById('countdown');
-
-    function updateCountdown(){
-      const now = new Date();
-      const diff = target - now;
-      if (diff > 0) {
-        cdEl.style.display = 'block';
-        const d = Math.floor(diff / (1000*60*60*24));
-        const h = Math.floor((diff / (1000*60*60)) % 24);
-        const m = Math.floor((diff / (1000*60)) % 60);
-        document.getElementById('cd-days').textContent = d;
-        document.getElementById('cd-hours').textContent = h;
-        document.getElementById('cd-mins').textContent = m;
-      } else {
-        cdEl.style.display = 'none';
-      }
-    }
-    updateCountdown();
-    setInterval(updateCountdown, 60000); // update every minute
-  </script>
+<canvas></canvas>
+	<div class="canvas1">	
+    <canvas resize="true" hidpi="off" id="canvas-1" style="height:100%; width:100%;"></canvas>	
+</div>
 </body>
 </html>
